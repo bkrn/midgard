@@ -41,6 +41,8 @@
 
 (define urandom (open-input-file "/dev/urandom"))
 
+(define output (open-output-file "output.txt"))
+
 (define (as-radian v) (/ (* v pi) 180.0))
 (define (as-degree v) (/ (* v 180.0) pi))
 
@@ -297,13 +299,17 @@
 (define (scale v min max scale) 
     (inexact->exact (round (* (/(- v min) (- max min)) scale))))
 
-;create a point normalizer from a bbox
-;that sets the minimum as zero and the maximum as 100 for the width and scaling
-;the height against that from 0
-;also flips from lat . lon to col . row
+; longitude is held to 100 horizontal cells on print
+; lattitude is scaled according to that 100
+(define (lat-scale bbox) (* 100 (/ (lat-width bbox) (lon-width bbox))))
+
+; create a point normalizer from a bbox
+; that sets the minimum as zero and the maximum as 100 for the width and scaling
+; the height against that from 0
+; also flips from lat . lon to col . row
 (define (create-normalizer bbox) (lambda (point) 
     (let* ((latscale (* 100 (/ (lat-width bbox) (lon-width bbox))))
-    (row (scale (lat point) (of "min-lat" bbox) (of "max-lat" bbox) latscale))
+    (row (scale (lat point) (of "min-lat" bbox) (of "max-lat" bbox) (lat-scale bbox)))
     (col (scale (lon point) (of "min-lon" bbox) (of "max-lon" bbox) 100)))
     (cons col row))))
 
@@ -315,7 +321,9 @@
 
 ; write a set of interior points and their middle to a file in a way that
 ; hopefully describes them visually
-;(define write-map (lambda (points center)))
+(define (write-map points center) 
+    (let ((port (set-output-port output)))
+    ()))
 
 ; estimate the midpoint of polygon described in the lon,lat,elev csv 
 ; at `file-name` using `count` random samples
